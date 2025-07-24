@@ -1102,18 +1102,13 @@ EOF
     strategy:
       fail-fast: false
       matrix:
-        database: [postgresql, mysql, mariadb]
-        client_version: 
-          - postgresql: ['13', '14', '15', '16']
-          - mysql: ['5.7', '8.0', '8.1']
-          - mariadb: ['10.6', '10.11', '11.0']
-        exclude:
+        include:
           - database: postgresql
-            client_version: ['5.7', '8.0', '8.1', '10.6', '10.11', '11.0']
-          - database: mysql
-            client_version: ['13', '14', '15', '16', '10.6', '10.11', '11.0']
+            client_versions: "13 14 15 16"
+          - database: mysql  
+            client_versions: "5.7 8.0 8.1"
           - database: mariadb
-            client_version: ['13', '14', '15', '16', '5.7', '8.0', '8.1']
+            client_versions: "10.6 10.11 11.0"
     
     steps:
     - name: Checkout repository
@@ -1125,7 +1120,7 @@ EOF
 
     - name: Test database-client compatibility
       run: |
-        echo "🔗 Testing ${{ matrix.database }} with client versions: ${{ join(matrix.client_version, ', ') }}"
+        echo "🔗 Testing ${{ matrix.database }} with client versions: ${{ matrix.client_versions }}"
         
         # Start database server
         case "${{ matrix.database }}" in
@@ -1155,7 +1150,7 @@ EOF
         sleep 45
         
         # Test with different client versions
-        for version in ${{ join(matrix.client_version, ' ') }}; do
+        for version in ${{ matrix.client_versions }}; do
           echo "Testing with client version $version"
           case "${{ matrix.database }}" in
             "postgresql")
@@ -1243,7 +1238,7 @@ EOF
 - ✅ Redis Exporter - Redis metrics
 
 ### 🔧 Technical Details
-- **Base Image:** Debian bookworm Slim (all services)
+- **Base Image:** Debian Bullseye Slim (all services)
 - **Architecture Support:** AMD64 + ARM64
 - **Security:** All services run as non-root users (UID/GID 1001)
 - **Registry:** \`ghcr.io/${{ github.repository }}/SERVICE:latest\`
