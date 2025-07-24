@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV POSTGRESQL_VERSION=15 \
     POSTGRESQL_USER=postgres \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 # Add PostgreSQL official APT repository
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    && echo "deb http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 
 # Install PostgreSQL
 RUN apt-get update && apt-get install -y \

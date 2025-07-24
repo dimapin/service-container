@@ -7,7 +7,7 @@ Production-ready Docker images with Bitnami-like features using Debian base imag
 
 ## 🏗️ Architecture
 
-All services are built on **Debian Bullseye Slim** for consistency, security, and reliability. Each service runs as a non-root user and includes comprehensive configuration options.
+All services are built on **Debian bookworm Slim** for consistency, security, and reliability. Each service runs as a non-root user and includes comprehensive configuration options.
 
 ## 📦 Services Included
 

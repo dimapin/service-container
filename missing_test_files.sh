@@ -1469,7 +1469,7 @@ create_file "test/html/index.html" '<!DOCTYPE html>
         </div>
         
         <div class="footer">
-            <p>🐳 All services running on <strong>Debian Bullseye Slim</strong> base images</p>
+            <p>🐳 All services running on <strong>Debian bookworm Slim</strong> base images</p>
             <p>🔒 Security-focused with non-root users and vulnerability scanning</p>
             <p>⚡ Production-ready with health checks, monitoring, and comprehensive testing</p>
             <p>🌍 Multi-architecture support (AMD64 + ARM64)</p>

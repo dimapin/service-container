@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV MYSQL_ROOT_PASSWORD="" \
     MYSQL_USER="" \

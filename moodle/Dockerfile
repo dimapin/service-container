@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV MOODLE_VERSION=4.5.1 \
     MOODLE_DATABASE_TYPE=mariadb \

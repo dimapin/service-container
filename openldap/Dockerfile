@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV LDAP_ORGANIZATION="Example Organization" \
     LDAP_DOMAIN=example.org \

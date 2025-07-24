@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV NODE_VERSION=18.18.2 \
     GHOST_CLI_VERSION=1.24.2 \

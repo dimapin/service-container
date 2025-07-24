@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV SHELL_USER=shell \
     SHELL_PASSWORD=""

@@ -1243,7 +1243,7 @@ EOF
 - ✅ Redis Exporter - Redis metrics
 
 ### 🔧 Technical Details
-- **Base Image:** Debian Bullseye Slim (all services)
+- **Base Image:** Debian bookworm Slim (all services)
 - **Architecture Support:** AMD64 + ARM64
 - **Security:** All services run as non-root users (UID/GID 1001)
 - **Registry:** \`ghcr.io/${{ github.repository }}/SERVICE:latest\`

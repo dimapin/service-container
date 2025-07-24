@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV MARIADB_VERSION=10.11 \
     MARIADB_ROOT_PASSWORD="" \
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://mariadb.org/mariadb_release_signing_key.asc -O /etc/apt/trusted.gpg.d/mariadb.asc && \
-    echo "deb https://mirror.mariadb.org/repo/10.11/debian bullseye main" > /etc/apt/sources.list.d/mariadb.list && \
+    echo "deb https://mirror.mariadb.org/repo/10.11/debian bookworm main" > /etc/apt/sources.list.d/mariadb.list && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server && \
     rm -rf /var/lib/apt/lists/*

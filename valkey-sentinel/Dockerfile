@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV VALKEY_VERSION=7.2.5 \
     VALKEY_SENTINEL_PORT_NUMBER=26379 \

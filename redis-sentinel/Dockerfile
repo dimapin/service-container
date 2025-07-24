@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV REDIS_VERSION=7.2.3 \
     REDIS_SENTINEL_PORT_NUMBER=26379 \

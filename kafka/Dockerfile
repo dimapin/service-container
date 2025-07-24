@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV KAFKA_VERSION=2.8.2 \
     SCALA_VERSION=2.13 \

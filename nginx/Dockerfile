@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV NGINX_VERSION=1.24.0 \
     NGINX_USER=nginx \
