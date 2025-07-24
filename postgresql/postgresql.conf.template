@@ -1,0 +1,40 @@
+listen_addresses = '*'
+port = ${POSTGRESQL_PORT_NUMBER}
+max_connections = ${POSTGRESQL_MAX_CONNECTIONS}
+shared_buffers = 128MB
+dynamic_shared_memory_type = posix
+max_wal_size = 1GB
+min_wal_size = 80MB
+log_timezone = '${POSTGRESQL_TIMEZONE:-UTC}'
+datestyle = 'iso, mdy'
+timezone = '${POSTGRESQL_TIMEZONE:-UTC}'
+lc_messages = 'en_US.utf8'
+lc_monetary = 'en_US.utf8'
+lc_numeric = 'en_US.utf8'
+lc_time = 'en_US.utf8'
+default_text_search_config = 'pg_catalog.english'
+wal_level = ${POSTGRESQL_WAL_LEVEL:-replica}
+synchronous_commit = ${POSTGRESQL_SYNCHRONOUS_COMMIT_MODE:-on}
+fsync = ${POSTGRESQL_FSYNC:-on}
+log_hostname = ${POSTGRESQL_LOG_HOSTNAME:-off}
+log_connections = ${POSTGRESQL_LOG_CONNECTIONS:-off}
+log_disconnections = ${POSTGRESQL_LOG_DISCONNECTIONS:-off}
+client_min_messages = ${POSTGRESQL_CLIENT_MIN_MESSAGES:-error}
+password_encryption = ${POSTGRESQL_PASSWORD_ENCRYPTION:-md5}
+default_toast_compression = '${POSTGRESQL_DEFAULT_TOAST_COMPRESSION:-pglz}'
+
+# Logging
+logging_collector = on
+log_directory = '/opt/postgresql/logs'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 100MB
+
+# Memory
+effective_cache_size = 256MB
+work_mem = 4MB
+maintenance_work_mem = 64MB
+
+# Checkpoint
+checkpoint_timeout = 5min
+checkpoint_completion_target = 0.5

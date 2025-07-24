@@ -1,0 +1,20 @@
+# Valkey Sentinel configuration
+
+port ${VALKEY_SENTINEL_PORT_NUMBER}
+dir /opt/valkey-sentinel
+
+# Logging
+logfile /opt/valkey-sentinel/logs/sentinel.log
+loglevel notice
+
+# Master monitoring
+sentinel monitor ${VALKEY_MASTER_NAME} ${VALKEY_MASTER_HOST} ${VALKEY_MASTER_PORT_NUMBER} ${VALKEY_SENTINEL_QUORUM}
+
+# Timeouts
+sentinel down-after-milliseconds ${VALKEY_MASTER_NAME} ${VALKEY_SENTINEL_DOWN_AFTER_MILLISECONDS:-5000}
+sentinel failover-timeout ${VALKEY_MASTER_NAME} ${VALKEY_SENTINEL_FAILOVER_TIMEOUT:-10000}
+sentinel parallel-syncs ${VALKEY_MASTER_NAME} 1
+
+# Security
+bind 0.0.0.0
+protected-mode no

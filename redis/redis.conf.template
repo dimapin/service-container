@@ -1,0 +1,123 @@
+# Redis configuration file
+
+# Network
+bind 0.0.0.0
+port ${REDIS_PORT_NUMBER}
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+
+# General
+daemonize no
+supervised no
+pidfile /opt/redis/tmp/redis.pid
+loglevel notice
+logfile /opt/redis/logs/redis.log
+databases ${REDIS_DATABASES}
+
+# Snapshotting
+save 900 1
+save 300 10
+save 60 10000
+stop-writes-on-bgsave-error yes
+rdbcompression yes
+rdbchecksum yes
+dbfilename dump.rdb
+dir /opt/redis/data
+
+# Replication
+# masterauth <master-password>
+# requirepass <password>
+$([ -n "$REDIS_PASSWORD" ] && echo "requirepass $REDIS_PASSWORD")
+
+# Security
+rename-command FLUSHDB ""
+rename-command FLUSHALL ""
+rename-command KEYS ""
+rename-command CONFIG "CONFIG_a8b2c3d4e5f6"
+
+# Clients
+maxclients 10000
+
+# Memory management
+maxmemory ${REDIS_MAX_MEMORY:-256mb}
+maxmemory-policy ${REDIS_MAXMEMORY_POLICY:-allkeys-lru}
+maxmemory-samples 5
+
+# Lazy freeing
+lazyfree-lazy-eviction no
+lazyfree-lazy-expire no
+lazyfree-lazy-server-del no
+replica-lazy-flush no
+
+# Append only file
+appendonly ${REDIS_AOF_ENABLED}
+appendfilename "appendonly.aof"
+appendfsync everysec
+no-appendfsync-on-rewrite no
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+aof-load-truncated yes
+aof-use-rdb-preamble yes
+
+# Lua scripting
+lua-time-limit 5000
+
+# Redis cluster
+# cluster-enabled yes
+# cluster-config-file nodes-6379.conf
+# cluster-node-timeout 15000
+
+# Slow log
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+
+# Latency monitor
+latency-monitor-threshold 0
+
+# Event notification
+notify-keyspace-events ""
+
+# Hashes
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+
+# Lists
+list-max-ziplist-size -2
+list-compress-depth 0
+
+# Sets
+set-max-intset-entries 512
+
+# Sorted sets
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+
+# HyperLogLog
+hll-sparse-max-bytes 3000
+
+# Streams
+stream-node-max-bytes 4096
+stream-node-max-entries 100
+
+# Active rehashing
+activerehashing yes
+
+# Client output buffers
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit replica 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+
+# Client query buffer
+client-query-buffer-limit 1gb
+
+# Protocol buffer
+proto-max-bulk-len 512mb
+
+# Frequency
+hz 10
+
+# Background save
+dynamic-hz yes
+aof-rewrite-incremental-fsync yes
+rdb-save-incremental-fsync yes

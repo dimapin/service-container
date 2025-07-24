@@ -1,0 +1,50 @@
+[mysqld]
+# Basic settings
+user = mariadb
+pid-file = /opt/mariadb/tmp/mariadb.pid
+socket = /opt/mariadb/tmp/mariadb.sock
+port = ${MARIADB_PORT_NUMBER}
+bind-address = ${MARIADB_BIND_ADDRESS}
+datadir = /opt/mariadb/data
+
+# Character set
+character-set-server = ${MARIADB_CHARACTER_SET}
+collation-server = ${MARIADB_COLLATE}
+
+# Connection settings
+max_connections = ${MARIADB_MAX_CONNECTIONS:-151}
+max_allowed_packet = ${MARIADB_MAX_ALLOWED_PACKET:-16M}
+
+# InnoDB settings
+innodb_buffer_pool_size = ${MARIADB_INNODB_BUFFER_POOL_SIZE:-256M}
+innodb_log_file_size = ${MARIADB_INNODB_LOG_FILE_SIZE:-256M}
+innodb_log_buffer_size = ${MARIADB_INNODB_LOG_BUFFER_SIZE:-64M}
+innodb_flush_method = ${MARIADB_INNODB_FLUSH_METHOD:-fsync}
+
+# Logging
+log-error = /opt/mariadb/logs/mariadb-error.log
+general_log = 0
+general_log_file = /opt/mariadb/logs/mariadb-general.log
+
+# Slow query log
+slow_query_log = ${MARIADB_ENABLE_SLOW_QUERY:-0}
+slow_query_log_file = /opt/mariadb/logs/mariadb-slow.log
+long_query_time = ${MARIADB_LONG_QUERY_TIME:-10.0}
+
+# Security
+skip-name-resolve
+skip-host-cache
+
+# Binary logging
+server-id = 1
+log-bin = /opt/mariadb/logs/mariadb-bin
+binlog_format = ROW
+expire_logs_days = 7
+
+[mysql]
+default-character-set = ${MARIADB_CHARACTER_SET}
+
+[client]
+default-character-set = ${MARIADB_CHARACTER_SET}
+socket = /opt/mariadb/tmp/mariadb.sock
+port = ${MARIADB_PORT_NUMBER}

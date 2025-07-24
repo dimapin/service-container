@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # Core database services for testing
+  postgresql-test:
+    build: ./postgresql
+    environment:
+      - POSTGRESQL_PASSWORD=testpass123
+      - POSTGRESQL_USERNAME=testuser
+      - POSTGRESQL_DATABASE=testdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./test/init-scripts/postgresql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 5432 -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql-test:
+    build: ./mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=testpass123
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpass123
+      - MYSQL_DATABASE=testdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./test/init-scripts/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptestpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  redis-test:
+    build: ./redis
+    environment:
+      - REDIS_PASSWORD=testpass123
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "testpass123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx-test:
+    build: ./nginx
+    environment:
+      - NGINX_PORT_NUMBER=8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./test/html:/opt/nginx/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Test client services
+  postgresql-client:
+    image: postgres:15-alpine
+    depends_on:
+      postgresql-test:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Testing PostgreSQL connection...' &&
+        PGPASSWORD=testpass123 psql -h postgresql-test -U testuser -d testdb -c 'SELECT version();' &&
+        PGPASSWORD=testpass123 psql -h postgresql-test -U testuser -d testdb -c 'SELECT COUNT(*) FROM app_schema.users;' &&
+        echo 'PostgreSQL tests completed successfully!'
+      "
+
+  mysql-client:
+    image: mysql:8.0
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Testing MySQL connection...' &&
+        mysql -h mysql-test -u testuser -ptestpass123 testdb -e 'SELECT @@version;' &&
+        mysql -h mysql-test -u testuser -ptestpass123 testdb -e 'SELECT COUNT(*) FROM users;' &&
+        echo 'MySQL tests completed successfully!'
+      "
+
+  redis-client:
+    image: redis:7-alpine
+    depends_on:
+      redis-test:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Testing Redis connection...' &&
+        redis-cli -h redis-test -a testpass123 ping &&
+        redis-cli -h redis-test -a testpass123 set test_key 'test_value' &&
+        redis-cli -h redis-test -a testpass123 get test_key &&
+        echo 'Redis tests completed successfully!'
+      "
+
+  # Load testing service
+  load-tester:
+    image: alpine:latest
+    command: >
+      sh -c "
+        apk add --no-cache curl apache2-utils postgresql-client mysql-client redis &&
+        echo 'Load testing tools installed' &&
+        sleep infinity
+      "
+    depends_on:
+      - postgresql-test
+      - mysql-test
+      - redis-test
+      - nginx-test
+
+volumes:
+  postgresql_test_data:
+  mysql_test_data:
+  redis_test_data:

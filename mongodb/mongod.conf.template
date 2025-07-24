@@ -1,0 +1,33 @@
+storage:
+  dbPath: /opt/mongodb/data
+  journal:
+    enabled: true
+  engine: wiredTiger
+  wiredTiger:
+    engineConfig:
+      cacheSizeGB: ${MONGODB_CACHE_SIZE_GB:-1}
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /opt/mongodb/logs/mongod.log
+  logRotate: rename
+
+net:
+  port: ${MONGODB_PORT_NUMBER}
+  bindIp: 0.0.0.0
+  maxIncomingConnections: ${MONGODB_MAX_CONNECTIONS:-65536}
+
+processManagement:
+  timeZoneInfo: /usr/share/zoneinfo
+  fork: false
+
+replication:
+  replSetName: ${MONGODB_REPLICA_SET_NAME:-}
+
+sharding:
+  clusterRole: ${MONGODB_CLUSTER_ROLE:-}
+
+operationProfiling:
+  slowOpThresholdMs: ${MONGODB_SLOW_OP_THRESHOLD:-100}
+  mode: ${MONGODB_PROFILING_MODE:-off}

@@ -1,0 +1,58 @@
+[mysqld]
+# Basic settings
+user = mysql
+pid-file = ${MYSQL_PID_FILE:-/opt/mysql/tmp/mysqld.pid}
+socket = ${MYSQL_SOCKET:-/opt/mysql/tmp/mysql.sock}
+port = ${MYSQL_PORT_NUMBER}
+bind-address = ${MYSQL_BIND_ADDRESS}
+datadir = /opt/mysql/data
+
+# Character set
+character-set-server = ${MYSQL_CHARACTER_SET}
+collation-server = ${MYSQL_COLLATE}
+
+# Connection settings
+max_connections = ${MYSQL_MAX_CONNECTIONS}
+max_allowed_packet = ${MYSQL_MAX_ALLOWED_PACKET}
+
+# Query cache settings
+query_cache_type = ${MYSQL_QUERY_CACHE_TYPE}
+query_cache_size = ${MYSQL_QUERY_CACHE_SIZE}
+
+# InnoDB settings
+innodb_buffer_pool_size = ${MYSQL_INNODB_BUFFER_POOL_SIZE}
+innodb_log_file_size = ${MYSQL_INNODB_LOG_FILE_SIZE}
+innodb_log_buffer_size = ${MYSQL_INNODB_LOG_BUFFER_SIZE}
+innodb_flush_method = ${MYSQL_INNODB_FLUSH_METHOD}
+innodb_lock_wait_timeout = ${MYSQL_INNODB_LOCK_WAIT_TIMEOUT}
+
+# Logging
+log-error = /opt/mysql/logs/mysql-error.log
+general_log = 0
+general_log_file = /opt/mysql/logs/mysql-general.log
+
+# Slow query log
+slow_query_log = ${MYSQL_ENABLE_SLOW_QUERY}
+slow_query_log_file = /opt/mysql/logs/mysql-slow.log  
+long_query_time = ${MYSQL_LONG_QUERY_TIME}
+
+# Security
+skip-name-resolve
+skip-host-cache
+
+# Binary logging (for replication)
+server-id = 1
+log-bin = /opt/mysql/logs/mysql-bin
+binlog_format = ROW
+expire_logs_days = 7
+
+# SQL Mode
+sql_mode = ${MYSQL_SQL_MODE:-STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO}
+
+[mysql]
+default-character-set = ${MYSQL_CHARACTER_SET}
+
+[client]
+default-character-set = ${MYSQL_CHARACTER_SET}
+socket = ${MYSQL_SOCKET:-/opt/mysql/tmp/mysql.sock}
+port = ${MYSQL_PORT_NUMBER}

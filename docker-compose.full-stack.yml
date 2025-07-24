@@ -1,0 +1,595 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASE SERVICES
+  # ============================================================================
+  postgresql:
+    build: ./postgresql
+    environment:
+      - POSTGRESQL_PASSWORD=postgres123
+      - POSTGRESQL_USERNAME=app_user
+      - POSTGRESQL_PASSWORD=app_pass
+      - POSTGRESQL_DATABASE=app_db
+      - POSTGRESQL_MAX_CONNECTIONS=200
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql_data:/opt/postgresql/data
+      - postgresql_logs:/opt/postgresql/logs
+      - ./test/init-scripts/postgresql:/docker-entrypoint-initdb.d
+    networks:
+      - databases
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 5432 -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mysql:
+    build: ./mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql123
+      - MYSQL_USER=app_user
+      - MYSQL_PASSWORD=app_pass
+      - MYSQL_DATABASE=app_db
+      - MYSQL_CHARACTER_SET=utf8mb4
+      - MYSQL_COLLATE=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/opt/mysql/data
+      - mysql_logs:/opt/mysql/logs
+      - ./test/init-scripts/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - databases
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmysql123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  mariadb:
+    build: ./mariadb
+    environment:
+      - MARIADB_ROOT_PASSWORD=mariadb123
+      - MARIADB_USER=app_user
+      - MARIADB_PASSWORD=app_pass
+      - MARIADB_DATABASE=app_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/opt/mariadb/data
+      - mariadb_logs:/opt/mariadb/logs
+    networks:
+      - databases
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmariadb123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  mongodb:
+    build: ./mongodb
+    environment:
+      - MONGODB_ROOT_USER=admin
+      - MONGODB_ROOT_PASSWORD=mongo123
+      - MONGODB_USERNAME=app_user
+      - MONGODB_PASSWORD=app_pass
+      - MONGODB_DATABASE=app_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/opt/mongodb/data
+      - mongodb_logs:/opt/mongodb/logs
+    networks:
+      - databases
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================================
+  # CACHE & MESSAGE QUEUE SERVICES
+  # ============================================================================
+  redis:
+    build: ./redis
+    environment:
+      - REDIS_PASSWORD=redis123
+      - REDIS_AOF_ENABLED=yes
+      - REDIS_DATABASES=16
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/opt/redis/data
+      - redis_logs:/opt/redis/logs
+    networks:
+      - cache
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-sentinel:
+    build: ./redis-sentinel
+    environment:
+      - REDIS_MASTER_HOST=redis
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_SENTINEL_QUORUM=1
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=5000
+    ports:
+      - "26379:26379"
+    volumes:
+      - redis_sentinel_logs:/opt/redis-sentinel/logs
+    networks:
+      - cache
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  valkey:
+    build: ./valkey
+    environment:
+      - VALKEY_PASSWORD=valkey123
+      - VALKEY_AOF_ENABLED=yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - valkey_data:/opt/valkey/data
+      - valkey_logs:/opt/valkey/logs
+    networks:
+      - cache
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "valkey123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey-sentinel:
+    build: ./valkey-sentinel
+    environment:
+      - VALKEY_MASTER_HOST=valkey
+      - VALKEY_MASTER_PORT_NUMBER=6379
+      - VALKEY_SENTINEL_QUORUM=1
+    ports:
+      - "26380:26379"
+    volumes:
+      - valkey_sentinel_logs:/opt/valkey-sentinel/logs
+    networks:
+      - cache
+    depends_on:
+      valkey:
+        condition: service_healthy
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - messaging
+
+  kafka:
+    build: ./kafka
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_LOG_RETENTION_HOURS=168
+      - KAFKA_LOG_SEGMENT_BYTES=1073741824
+      - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=300000
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/opt/kafka/logs
+      - kafka_config:/opt/kafka/config
+    networks:
+      - messaging
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================================================
+  # WEB & APPLICATION SERVICES
+  # ============================================================================
+  nginx:
+    build: ./nginx
+    environment:
+      - NGINX_PORT_NUMBER=8080
+      - NGINX_SERVER_NAME=localhost
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./test/html:/opt/nginx/html
+      - nginx_logs:/opt/nginx/logs
+      - nginx_conf:/opt/nginx/conf
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ghost:
+    build: ./ghost
+    environment:
+      - GHOST_URL=http://localhost:2368
+    ports:
+      - "2368:2368"
+    volumes:
+      - ghost_content:/var/lib/ghost/content
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2368"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  moodle:
+    build: ./moodle
+    environment:
+      - MOODLE_DATABASE_TYPE=mariadb
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_USER=app_user
+      - MOODLE_DATABASE_PASSWORD=app_pass
+      - MOODLE_DATABASE_NAME=app_db
+      - MOODLE_USERNAME=admin
+      - MOODLE_PASSWORD=admin123
+      - MOODLE_EMAIL=admin@example.com
+      - MOODLE_SITE_NAME=Docker Moodle
+    ports:
+      - "8081:80"
+    volumes:
+      - moodle_data:/opt/moodledata
+    networks:
+      - web
+      - databases
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+  git:
+    build: ./git
+    ports:
+      - "9418:9418"
+      - "2222:22"
+    volumes:
+      - git_repositories:/opt/git/repositories
+    networks:
+      - infrastructure
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9418"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kubectl:
+    build: ./kubectl
+    command: ["sleep", "infinity"]
+    volumes:
+      - ./test/kubeconfig:/home/kubectl/.kube
+    networks:
+      - infrastructure
+
+  os-shell:
+    build: ./os-shell
+    environment:
+      - SHELL_PASSWORD=shell123
+    ports:
+      - "2223:22"
+    volumes:
+      - shell_home:/home/shell
+    networks:
+      - infrastructure
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "22"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  openldap:
+    build: ./openldap
+    environment:
+      - LDAP_ADMIN_PASSWORD=ldap123
+      - LDAP_DOMAIN=example.org
+      - LDAP_ORGANIZATION=Docker Services Organization
+      - LDAP_USERS=user1,user2,user3
+      - LDAP_PASSWORDS=pass1,pass2,pass3
+    ports:
+      - "1389:1389"
+      - "1636:1636"
+    volumes:
+      - ldap_data:/opt/openldap/data
+      - ldap_config:/opt/openldap/conf
+    networks:
+      - infrastructure
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-b", "dc=example,dc=org", "-H", "ldap://localhost:1389"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============================================================================
+  # MONITORING & EXPORTERS
+  # ============================================================================
+  apache-exporter:
+    build: ./apache-exporter
+    ports:
+      - "9117:9117"
+    command: ["./apache_exporter", "--scrape_uri=http://nginx:8080/nginx_status"]
+    networks:
+      - monitoring
+      - web
+    depends_on:
+      - nginx
+
+  postgresql-exporter:
+    build: ./postgresql-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://app_user:app_pass@postgresql:5432/app_db?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - monitoring
+      - databases
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  mysql-exporter:
+    build: ./mysql-exporter
+    environment:
+      - DATA_SOURCE_NAME=app_user:app_pass@tcp(mysql:3306)/app_db
+    ports:
+      - "9104:9104"
+    networks:
+      - monitoring
+      - databases
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mongodb-exporter:
+    build: ./mongodb-exporter
+    environment:
+      - MONGODB_URI=mongodb://app_user:app_pass@mongodb:27017/app_db
+    ports:
+      - "9216:9216"
+    networks:
+      - monitoring
+      - databases
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  redis-exporter:
+    build: ./redis-exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=redis123
+    ports:
+      - "9121:9121"
+    networks:
+      - monitoring
+      - cache
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ============================================================================
+  # MONITORING STACK
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./test/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+    depends_on:
+      - postgresql-exporter
+      - mysql-exporter
+      - mongodb-exporter
+      - redis-exporter
+      - apache-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=grafana123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./test/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./test/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  # ============================================================================
+  # ADMIN INTERFACES
+  # ============================================================================
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8082:8080"
+    networks:
+      - databases
+      - web
+    depends_on:
+      - postgresql
+      - mysql
+      - mariadb
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=mysql,mariadb
+    ports:
+      - "8083:80"
+    networks:
+      - databases
+      - web
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mariadb:
+        condition: service_healthy
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongo123
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=mongo123
+    ports:
+      - "8084:8081"
+    networks:
+      - databases
+      - web
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=redis:redis:6379:0:redis123,valkey:valkey:6379:0:valkey123
+    ports:
+      - "8085:8081"
+    networks:
+      - cache
+      - web
+    depends_on:
+      - redis
+      - valkey
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  # Database volumes
+  postgresql_data:
+  postgresql_logs:
+  mysql_data:
+  mysql_logs:
+  mariadb_data:
+  mariadb_logs:
+  mongodb_data:
+  mongodb_logs:
+  
+  # Cache volumes
+  redis_data:
+  redis_logs:
+  valkey_data:
+  valkey_logs:
+  redis_sentinel_logs:
+  valkey_sentinel_logs:
+  
+  # Message queue volumes
+  kafka_data:
+  kafka_config:
+  zookeeper_data:
+  zookeeper_logs:
+  
+  # Web service volumes
+  nginx_logs:
+  nginx_conf:
+  ghost_content:
+  moodle_data:
+  
+  # Infrastructure volumes
+  git_repositories:
+  shell_home:
+  ldap_data:
+  ldap_config:
+  
+  # Monitoring volumes
+  prometheus_data:
+  grafana_data:
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  databases:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24
+  
+  cache:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+  
+  messaging:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.3.0/24
+  
+  web:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.4.0/24
+  
+  infrastructure:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.5.0/24
+  
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.6.0/24

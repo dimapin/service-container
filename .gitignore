@@ -1,0 +1,42 @@
+# Docker
+*.log
+.env
+.env.local
+
+# Test results
+test-results.json
+test-results.xml
+
+# Backup files
+*.backup
+*.dump
+*.sql.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Logs
+logs/
+*.log
+
+# Data directories (when mounted locally)
+data/
+volumes/
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.crt

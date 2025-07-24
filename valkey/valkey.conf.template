@@ -1,0 +1,53 @@
+# Valkey configuration file (Redis-compatible)
+
+# Network
+bind 0.0.0.0
+port ${VALKEY_PORT_NUMBER}
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+
+# General
+daemonize no
+supervised no
+pidfile /opt/valkey/tmp/valkey.pid
+loglevel notice
+logfile /opt/valkey/logs/valkey.log
+databases ${VALKEY_DATABASES}
+
+# Snapshotting
+save 900 1
+save 300 10
+save 60 10000
+stop-writes-on-bgsave-error yes
+rdbcompression yes
+rdbchecksum yes
+dbfilename dump.rdb
+dir /opt/valkey/data
+
+# Security
+$([ -n "$VALKEY_PASSWORD" ] && echo "requirepass $VALKEY_PASSWORD")
+
+# Memory management
+maxmemory ${VALKEY_MAX_MEMORY:-256mb}
+maxmemory-policy ${VALKEY_MAXMEMORY_POLICY:-allkeys-lru}
+
+# Append only file
+appendonly ${VALKEY_AOF_ENABLED}
+appendfilename "appendonly.aof"
+appendfsync everysec
+
+# Slow log
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+
+# Active rehashing
+activerehashing yes
+
+# Client output buffers
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit replica 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+
+# Background operations
+hz 10
