@@ -21,10 +21,9 @@ RUN apt-get update && apt-get install -y \
     gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r openldap --gid=1001 && \
-    useradd -r -g openldap --uid=1001 --home-dir=/opt/openldap openldap && \
-    mkdir -p /opt/openldap/{data,conf} && \
-    chown -R openldap:openldap /opt/openldap
+RUN mkdir -p /opt/openldap/{data,conf} && \
+    chown -R openldap:openldap /opt/openldap && \
+    usermod -d /opt/openldap openldap
 
 WORKDIR /opt/openldap
 

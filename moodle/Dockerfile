@@ -15,7 +15,7 @@ ENV MOODLE_VERSION=4.5.1 \
 RUN apt-get update && apt-get install -y \
     apache2 \
     php8.2 \
-    php8.2-apache2 \
+    libapache2-mod-php8.2 \
     php8.2-mysql \
     php8.2-pgsql \
     php8.2-gd \
@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd -r moodle --gid=1001 && \
     useradd -r -g moodle --uid=1001 --home-dir=/opt/moodle moodle
 
-RUN wget https://download.moodle.org/download.php/direct/stable403/moodle-${MOODLE_VERSION}.tgz && \
+RUN wget https://download.moodle.org/download.php/direct/stable405/moodle-${MOODLE_VERSION}.tgz && \
     tar -xzf moodle-${MOODLE_VERSION}.tgz && \
     mv moodle /opt/moodle && \
     mkdir -p /opt/moodledata && \
