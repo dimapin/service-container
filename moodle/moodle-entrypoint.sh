@@ -9,20 +9,6 @@ if [ "$(id -u)" = '0' ]; then
     exec gosu moodle "$0" "$@"
 fi
 
-# Configure Apache
-cat > /etc/apache2/sites-available/000-default.conf << EOF
-<VirtualHost *:80>
-    DocumentRoot /opt/moodle
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
-    
-    <Directory /opt/moodle>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-EOF
-
 # Initialize Moodle if config doesn't exist
 if [ ! -f "/opt/moodle/config.php" ]; then
     log "Initializing Moodle..."

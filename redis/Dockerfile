@@ -31,14 +31,14 @@ RUN wget http://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz && \
 
 RUN groupadd -r redis --gid=1001 && \
     useradd -r -g redis --uid=1001 --home-dir=/opt/redis redis && \
-    mkdir -p /opt/redis/{data,conf,logs} && \
-    chown -R redis:redis /opt/redis
+    mkdir -p /opt/redis/{data,conf,logs}
 
 WORKDIR /opt/redis
 
 COPY redis.conf.template /opt/redis/conf/
 COPY redis-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/redis-entrypoint.sh
+RUN chmod +x /usr/local/bin/redis-entrypoint.sh && \
+    chown -R redis:redis /opt/redis
 
 EXPOSE 6379
 VOLUME ["/opt/redis/data"]

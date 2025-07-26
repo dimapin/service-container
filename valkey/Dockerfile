@@ -27,17 +27,20 @@ RUN wget https://github.com/valkey-io/valkey/archive/refs/tags/${VALKEY_VERSION}
 
 RUN groupadd -r valkey --gid=1001 && \
     useradd -r -g valkey --uid=1001 --home-dir=/opt/valkey valkey && \
-    mkdir -p /opt/valkey/{data,conf,logs} && \
-    chown -R valkey:valkey /opt/valkey
+    mkdir -p /opt/valkey/{data,conf,logs}
 
 WORKDIR /opt/valkey
 
 COPY valkey.conf.template /opt/valkey/conf/
 COPY valkey-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/valkey-entrypoint.sh
+RUN chmod +x /usr/local/bin/valkey-entrypoint.sh && \
+    chown -R valkey:valkey /opt/valkey
 
 EXPOSE 6379
 VOLUME ["/opt/valkey/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD valkey-cli -p $VALKEY_PORT_NUMBER ping | grep -q PONG || exit 1
 
 ENTRYPOINT ["valkey-entrypoint.sh"]
 CMD ["valkey-server", "/opt/valkey/conf/valkey.conf"]

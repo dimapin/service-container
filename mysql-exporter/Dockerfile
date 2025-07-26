@@ -1,6 +1,8 @@
 # Build stage
 FROM debian:bookworm-slim AS builder
 
+ENV MYSQL_EXPORTER_VERSION=v0.16.0
+
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -14,6 +16,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /src
 RUN git clone https://github.com/prometheus/mysqld_exporter.git . && \
+    git checkout ${MYSQL_EXPORTER_VERSION} && \
     go mod download && \
     CGO_ENABLED=0 GOOS=linux go build -o mysqld_exporter
 

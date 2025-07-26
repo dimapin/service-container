@@ -29,5 +29,8 @@ RUN mkdir -p /opt/mysql/{data,conf,logs} && \
 EXPOSE 3306
 VOLUME ["/opt/mysql/data"]
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD mysqladmin ping -h 127.0.0.1 --silent || exit 1
+
 USER mysql
 CMD ["mysqld"]

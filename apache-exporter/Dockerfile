@@ -1,6 +1,8 @@
 # Build stage
 FROM debian:bookworm-slim AS builder
 
+ENV APACHE_EXPORTER_VERSION=v1.0.8
+
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -14,6 +16,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /src
 RUN git clone https://github.com/Lusitaniae/apache_exporter.git . && \
+    git checkout ${APACHE_EXPORTER_VERSION} && \
     go mod download && \
     CGO_ENABLED=0 GOOS=linux go build -o apache_exporter
 

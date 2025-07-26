@@ -1,6 +1,8 @@
 # Build stage
 FROM debian:bookworm-slim AS builder
 
+ENV MONGODB_EXPORTER_VERSION=v0.40.0
+
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -14,6 +16,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /src
 RUN git clone https://github.com/percona/mongodb_exporter.git . && \
+    git checkout ${MONGODB_EXPORTER_VERSION} && \
     go mod download && \
     CGO_ENABLED=0 GOOS=linux go build -o mongodb_exporter
 
@@ -22,6 +25,7 @@ FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r mongodb-exporter --gid=1001 && \
@@ -35,5 +39,7 @@ WORKDIR /opt/mongodb-exporter
 EXPOSE 9216
 USER mongodb-exporter
 ENV MONGODB_URI=""
-ENTRYPOINT ["./mongodb_exporter"]
+ENTRYPOINT ["./mongodb_exporter"] 
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD nc -z localhost 9216 || exit 1

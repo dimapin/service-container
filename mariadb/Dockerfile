@@ -27,9 +27,13 @@ RUN wget https://mariadb.org/mariadb_release_signing_key.asc -O /etc/apt/trusted
     DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/mariadb/{data,conf,logs,tmp} && \
-    chown -R mariadb:mariadb /opt/mariadb && \
-    usermod -d /opt/mariadb mariadb
+RUN groupadd -r mariadb --gid=999 || true && \
+    useradd -r -g mariadb --uid=999 --home-dir=/opt/mariadb --shell=/bin/false mariadb || true && \
+    mkdir -p /opt/mariadb/data && \
+    mkdir -p /opt/mariadb/conf && \
+    mkdir -p /opt/mariadb/logs && \
+    mkdir -p /opt/mariadb/tmp && \
+    chown -R mariadb:mariadb /opt/mariadb
 
 WORKDIR /opt/mariadb
 
@@ -38,6 +42,9 @@ RUN chmod +x /usr/local/bin/mariadb-entrypoint.sh
 
 EXPOSE 3306
 VOLUME ["/opt/mariadb/data"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD mariadb-admin ping -h 127.0.0.1 --silent || exit 1
 
 ENTRYPOINT ["mariadb-entrypoint.sh"]
 CMD ["mysqld"]

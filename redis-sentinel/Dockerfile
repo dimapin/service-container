@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gosu \
     gettext-base \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget http://download.redis.io/releases/redis-${REDIS_VERSION}.tar.gz && \
@@ -44,3 +45,5 @@ VOLUME ["/opt/redis-sentinel/conf"]
 ENTRYPOINT ["redis-sentinel-entrypoint.sh"]
 CMD ["redis-sentinel", "/opt/redis-sentinel/conf/sentinel.conf"]
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD nc -z localhost ${REDIS_SENTINEL_PORT_NUMBER} || exit 1

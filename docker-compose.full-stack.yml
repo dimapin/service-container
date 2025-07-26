@@ -132,6 +132,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "nc -z localhost 26379 || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 60s
 
   valkey:
     build: ./valkey
@@ -166,6 +172,13 @@ services:
     depends_on:
       valkey:
         condition: service_healthy
+    # command: ["sh", "-c", "sleep 30 && valkey-sentinel-entrypoint.sh valkey-sentinel /opt/valkey-sentinel/conf/sentinel.conf"]
+    # healthcheck:
+    #   test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/26379' || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
 
   # Zookeeper for Kafka
   zookeeper:
@@ -269,12 +282,13 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 60s
-      timeout: 30s
-      retries: 3
-      start_period: 120s
+    # command: ["sh", "-c", "sleep 60 && moodle-entrypoint.sh apache2-foreground"]
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "nc -z localhost 80 || exit 1"]
+    #   interval: 30s
+    #   timeout: 15s
+    #   retries: 5
+    #   start_period: 240s
 
   # ============================================================================
   # INFRASTRUCTURE SERVICES
@@ -367,6 +381,13 @@ services:
     depends_on:
       postgresql:
         condition: service_healthy
+    # command: ["sh", "-c", "sleep 15 && ./postgres_exporter"]
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "nc -z localhost 9187 || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 45s
 
   mysql-exporter:
     build: ./mysql-exporter
@@ -393,6 +414,13 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    # command: ["sh", "-c", "sleep 20 && ./mongodb_exporter"]
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "nc -z localhost 9216 || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
 
   redis-exporter:
     build: ./redis-exporter
@@ -407,6 +435,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "nc -z localhost 9121 || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 30s
 
   # ============================================================================
   # MONITORING STACK
@@ -479,6 +513,12 @@ services:
         condition: service_healthy
       mariadb:
         condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/80' || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
 
   mongo-express:
     image: mongo-express:latest
@@ -496,6 +536,12 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "sh", "-c", "wget -q --tries=1 --timeout=5 --spider http://localhost:8081 || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s
 
   redis-commander:
     image: rediscommander/redis-commander:latest

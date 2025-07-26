@@ -36,7 +36,9 @@ COPY valkey-sentinel.conf.template /opt/valkey-sentinel/conf/
 COPY valkey-sentinel-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/valkey-sentinel-entrypoint.sh
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD nc -z localhost ${VALKEY_SENTINEL_PORT_NUMBER} || exit 1
+
 EXPOSE 26379
 ENTRYPOINT ["valkey-sentinel-entrypoint.sh"]
 CMD ["valkey-sentinel", "/opt/valkey-sentinel/conf/sentinel.conf"]
-

@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gosu \
     cron \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r moodle --gid=1001 && \
@@ -47,6 +48,19 @@ RUN wget https://download.moodle.org/download.php/direct/stable405/moodle-${MOOD
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf && \
     a2enmod rewrite
 
+# Configure Apache default site at build time (as root)
+RUN cat > /etc/apache2/sites-available/000-default.conf <<'EOF'
+<VirtualHost *:80>
+    DocumentRoot /opt/moodle
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+    <Directory /opt/moodle>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+EOF
+
 WORKDIR /opt/moodle
 
 COPY moodle-entrypoint.sh /usr/local/bin/
@@ -55,6 +69,8 @@ RUN chmod +x /usr/local/bin/moodle-entrypoint.sh
 EXPOSE 80
 VOLUME ["/opt/moodledata"]
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
+
 ENTRYPOINT ["moodle-entrypoint.sh"]
 CMD ["apache2-foreground"]
-

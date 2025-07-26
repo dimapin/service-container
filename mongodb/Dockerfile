@@ -38,3 +38,5 @@ VOLUME ["/opt/mongodb/data"]
 ENTRYPOINT ["mongodb-entrypoint.sh"]
 CMD ["mongod"]
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD mongosh --eval 'db.adminCommand({ping: 1})' --port ${MONGODB_PORT_NUMBER} || exit 1

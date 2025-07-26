@@ -1,6 +1,8 @@
 # Build stage
 FROM debian:bookworm-slim AS builder
 
+ENV POSTGRESQL_EXPORTER_VERSION=v0.16.0
+
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -14,14 +16,20 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /src
 RUN git clone https://github.com/prometheus-community/postgres_exporter.git . && \
+    git checkout ${POSTGRESQL_EXPORTER_VERSION} && \
     go mod download && \
-    CGO_ENABLED=0 GOOS=linux go build -o postgres_exporter ./cmd/postgres_exporter
+    CGO_ENABLED=0 GOOS=linux go build -o postgres_exporter ./cmd/postgres_exporter && \
+    # Add healthcheck for postgresql-exporter
+    echo '#!/bin/sh' > /usr/local/bin/healthcheck.sh && \
+    echo 'exec nc -z localhost 9187' >> /usr/local/bin/healthcheck.sh && \
+    chmod +x /usr/local/bin/healthcheck.sh
 
 # Runtime stage
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r postgres-exporter --gid=1001 && \
@@ -30,10 +38,11 @@ RUN groupadd -r postgres-exporter --gid=1001 && \
     chown -R postgres-exporter:postgres-exporter /opt/postgres-exporter
 
 COPY --from=builder /src/postgres_exporter /opt/postgres-exporter/
+COPY --from=builder /usr/local/bin/healthcheck.sh /usr/local/bin/healthcheck.sh
 
 WORKDIR /opt/postgres-exporter
 EXPOSE 9187
 USER postgres-exporter
 ENV DATA_SOURCE_NAME=""
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD /usr/local/bin/healthcheck.sh || exit 1
 ENTRYPOINT ["./postgres_exporter"]
-

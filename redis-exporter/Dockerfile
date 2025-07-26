@@ -1,6 +1,8 @@
 # Build stage
 FROM debian:bookworm-slim AS builder
 
+ENV REDIS_EXPORTER_VERSION=v1.66.0
+
 RUN apt-get update && apt-get install -y \
     wget \
     git \
@@ -14,6 +16,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 
 WORKDIR /src
 RUN git clone https://github.com/oliver006/redis_exporter.git . && \
+    git checkout ${REDIS_EXPORTER_VERSION} && \
     go mod download && \
     CGO_ENABLED=0 GOOS=linux go build -o redis_exporter
 
@@ -22,6 +25,7 @@ FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r redis-exporter --gid=1001 && \

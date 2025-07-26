@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgresql:
+    build: ./postgresql
+    environment:
+      - POSTGRESQL_PASSWORD=postgres123
+      - POSTGRESQL_USERNAME=app_user
+      - POSTGRESQL_PASSWORD=app_pass
+      - POSTGRESQL_DATABASE=app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql_data:/opt/postgresql/data
+    networks:
+      - databases
+
+  mysql:
+    build: ./mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql123
+      - MYSQL_USER=app_user
+      - MYSQL_PASSWORD=app_pass
+      - MYSQL_DATABASE=app_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/opt/mysql/data
+    networks:
+      - databases
+
+  redis:
+    build: ./redis
+    environment:
+      - REDIS_PASSWORD=redis123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/opt/redis/data
+    networks:
+      - cache
+
+volumes:
+  postgresql_data:
+  mysql_data:
+  redis_data:
+
+networks:
+  databases:
+    driver: bridge
+  cache:
+    driver: bridge

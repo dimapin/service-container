@@ -28,6 +28,9 @@ RUN apt-get update && apt-get install -y \
     postgresql-contrib-${POSTGRESQL_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 
+# Add PostgreSQL binaries to PATH
+ENV PATH="/usr/lib/postgresql/${POSTGRESQL_VERSION}/bin:${PATH}"
+
 # Create postgresql user and directories
 RUN groupadd -r postgresql --gid=1001 && \
     useradd -r -g postgresql --uid=1001 --home-dir=/opt/postgresql postgresql && \
@@ -45,3 +48,6 @@ VOLUME ["/opt/postgresql/data"]
 USER postgresql
 ENTRYPOINT ["/opt/postgresql/entrypoint.sh"]
 CMD ["postgres"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD pg_isready -h localhost -p ${POSTGRESQL_PORT_NUMBER} -U ${POSTGRESQL_USER} || exit 1
